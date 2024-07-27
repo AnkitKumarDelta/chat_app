@@ -10,25 +10,20 @@ const io = new Server(server);
 const users = {};
 
 io.on('connection', (socket) => {
-    // If a new user joins, let other users know
+    // Notify other users when a new user joins
     socket.on('new-user-joined', (name) => {
         users[socket.id] = name;
-        socket.broadcast.emit('user-joined', name);
+        io.emit('user-joined', name); // Use io.emit to broadcast to all clients
     });
 
-    // If someone sends a message, broadcast it to all
+    // Handle sending messages
     socket.on('send', (data) => {
-        if (data.type === 'message') {
-            socket.broadcast.emit('receive', { type: 'message', data: data.data, name: users[socket.id] });
-        } else if (data.type === 'file') {
-            // Broadcast file as binary data
-            socket.broadcast.emit('receive', { type: 'file', data: data.data, fileName: data.fileName, name: users[socket.id] });
-        }
+        io.emit('receive', { ...data, name: users[socket.id] }); // Use io.emit to broadcast to all clients
     });
 
-    // If someone leaves the chat, let others know
+    // Notify other users when someone disconnects
     socket.on('disconnect', () => {
-        socket.broadcast.emit('left', users[socket.id]);
+        io.emit('left', users[socket.id]); // Use io.emit to broadcast to all clients
         delete users[socket.id];
     });
 });
@@ -36,7 +31,7 @@ io.on('connection', (socket) => {
 app.use(express.static(path.resolve("./public")));
 
 app.get("/", (req, res) => {
-    return res.sendFile(path.join(__dirname, "/public/index.html"));
+  return res.sendFile(path.join(__dirname, "/public/index.html"));
 });
 
 server.listen(9000, () => console.log(`Server Started at PORT:9000`));
