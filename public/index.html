@@ -5,6 +5,7 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Chat APP</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <style>
     body {
     height: 100vh;
@@ -77,6 +78,23 @@ text-align: center;
     height: 34px;
 }
 
+#fileInput {
+    display: none;
+}
+
+#fileLabel {
+    cursor: pointer;
+    padding: 10px;
+    border: 2px solid black;
+    border-radius: 6px;
+    background-color: #fff;
+    display: inline-block;
+    margin-right: 10px;
+}
+
+#fileLabel i {
+    font-size: 18px;
+}
   </style>
 </head>
 <body>
@@ -89,10 +107,10 @@ text-align: center;
 <div class="send">
     <form action="" id="send-container" enctype="multipart/form-data">
         <input type="text" name="messageInp" id="messageInp">
+        <label id="fileLabel" for="fileInput"><i class="fa-solid fa-file"></i></label>
         <input type="file" id="fileInput">
         <button id="btn" type="submit">Send</button>
     </form>
-    
 </div>
 
   <script src="/socket.io/socket.io.js"></script>
@@ -152,7 +170,6 @@ form.addEventListener('submit',(e)=>{
     }
 });
 
-
 //ask user his name and let server know
 const name = prompt("Enter your name to join");
 socket.emit('new-user-joined', name);
@@ -172,7 +189,6 @@ socket.on('receive', data => {
         appendFile(url, data.fileName, 'left');
     }
 });
-
 
 //if user leave append the info in container
 socket.on('left', name=>{
