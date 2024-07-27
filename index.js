@@ -16,9 +16,13 @@ io.on('connection', (socket) => {
         socket.broadcast.emit('user-joined', name);
     });
 // if someone sends a message broadcast all
-    socket.on('send', message => {
-        socket.broadcast.emit('receive', { message: message, name: users[socket.id] });
-    });
+socket.on('send', data => {
+    if (data.type === 'message') {
+        socket.broadcast.emit('receive', { type: 'message', data: data.data, name: users[socket.id] });
+    } else if (data.type === 'file') {
+        socket.broadcast.emit('receive', { type: 'file', data: data.data, fileName: data.fileName, name: users[socket.id] });
+    }
+});
 //if someone leave the chat broadcast others
     socket.on('disconnect', () => {
         socket.broadcast.emit('left',users[socket.id]);

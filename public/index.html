@@ -87,17 +87,20 @@ text-align: center;
 <div class="container">
 </div>
 <div class="send">
-    <form action="" id="send-container">
+    <form action="" id="send-container" enctype="multipart/form-data">
         <input type="text" name="messageInp" id="messageInp">
+        <input type="file" id="fileInput">
         <button id="btn" type="submit">Send</button>
     </form>
+    
 </div>
 
   <script src="/socket.io/socket.io.js"></script>
   <script>
     const socket = io();
-    const form = document.querySelector('#send-container');
+const form = document.querySelector('#send-container');
 const messageInp = document.getElementById('messageInp');
+const fileInput = document.getElementById('fileInput');
 const messageContainer = document.querySelector('.container');
 var audio = new Audio('livechat-129007.mp3');
 
@@ -107,17 +110,48 @@ const append = (message, position) => {
     messageElement.classList.add('message');
     messageElement.classList.add(position);
     messageContainer.append(messageElement);
-    if(position == 'left')
-       audio.play();
+    if(position == 'left') {
+        audio.play();
+    }
+}
+
+const appendFile = (fileUrl, fileName, position) => {
+    const fileElement = document.createElement('div');
+    fileElement.classList.add('message');
+    fileElement.classList.add(position);
+    const link = document.createElement('a');
+    link.href = fileUrl;
+    link.target = '_blank';
+    link.innerText = `File: ${fileName}`;
+    fileElement.appendChild(link);
+    messageContainer.append(fileElement);
+    if(position == 'left') {
+        audio.play();
+    }
 }
 
 form.addEventListener('submit',(e)=>{
-e.preventDefault();
-const message = messageInp.value;
-append(`You: ${message}`, 'right');
-socket.emit('send',message);
-messageInp.value='';
+    e.preventDefault();
+    const message = messageInp.value;
+    const file = fileInput.files[0];
+
+    if (message) {
+        append(`You: ${message}`, 'right');
+        socket.emit('send', { type: 'message', data: message });
+        messageInp.value = '';
+    }
+
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = () => {
+            const arrayBuffer = reader.result;
+            socket.emit('send', { type: 'file', data: arrayBuffer, fileName: file.name });
+        };
+        reader.readAsArrayBuffer(file);
+        fileInput.value = '';
+    }
 });
+
 
 //ask user his name and let server know
 const name = prompt("Enter your name to join");
@@ -130,8 +164,15 @@ socket.on('user-joined', name => {
 
 //if user send a message receive it
 socket.on('receive', data => {
-    append(`${data.name}:${data.message}`, 'left');
+    if (data.type === 'message') {
+        append(`${data.name}: ${data.data}`, 'left');
+    } else if (data.type === 'file') {
+        const blob = new Blob([data.data]);
+        const url = URL.createObjectURL(blob);
+        appendFile(url, data.fileName, 'left');
+    }
 });
+
 
 //if user leave append the info in container
 socket.on('left', name=>{
